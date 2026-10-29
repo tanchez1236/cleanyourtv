@@ -1,6 +1,6 @@
 # Race-weekend panel with automatic updates
 
-The launcher shows a small F1 panel under the clock from 12 hours before a weekend's first session
+The launcher shows a small F1 panel under the clock from 24 hours before a weekend's first session
 until 4 hours after the race starts. It shows the next session with a countdown (or the live one) and
 the weekend's session times in the TV's time zone. When no race is near, it takes no space.
 

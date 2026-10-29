@@ -27,6 +27,11 @@
   <a href="docs/PRESS.md"><img src="docs/card-halloween.jpg" alt="360 TV models · 97 brands · 30 languages · 561 KB launcher. Featured in TechCrunch, TechRadar, Tom's Guide, Mashable, Android Authority, XDA, FlatpanelsHD, It's FOSS, Phandroid, GIGAZINE, Xataka, WinFuture, Frandroid, Macitynet, Techaeris, TechPP and 298 more: 314 articles from 44 countries. Before: stock Google TV home with a sponsored ad. After: the Clean Your TV launcher." width="800"></a>
 </p>
 
+> **This is a fork of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv).** It adds a live
+> F1 calendar, a weather widget and a five-app dock for one Hisense HiSmartTV A4. It is not proposed
+> upstream because the original project forbids network access and the `INTERNET` permission in the
+> launcher. See [FORK.md](FORK.md) for the changes and the reason.
+
 ## Start here
 
 | You have | Go to |

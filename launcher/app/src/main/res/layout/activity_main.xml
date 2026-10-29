@@ -176,6 +176,37 @@
                         android:layout_marginBottom="9dp"
                         android:orientation="vertical">
 
+                        <!-- Weather from the TV's last known location (see WeatherLoader): the place and
+                             the current temperature, above the date. Hidden until the first reading. -->
+                        <LinearLayout
+                            android:id="@+id/weatherRow"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="3dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:id="@+id/weatherIcon"
+                                android:layout_width="17dp"
+                                android:layout_height="17dp"
+                                android:layout_marginEnd="7dp"
+                                android:importantForAccessibility="no"
+                                android:tint="#D9FFFFFF" />
+
+                            <TextView
+                                android:id="@+id/weatherText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:singleLine="true"
+                                android:textColor="#CCFFFFFF"
+                                android:textSize="13sp"
+                                android:fontFamily="@string/font_medium"
+                                android:letterSpacing="0.04" />
+                        </LinearLayout>
+
                         <!-- Shamsi date ("27 Mehr 1405"), shown when shamsi_date is on. -->
                         <TextView
                             android:id="@+id/shamsiDate"
@@ -203,7 +234,7 @@
                             android:format12Hour="@string/date_format_home"
                             android:format24Hour="@string/date_format_home"
                             android:textColor="#A6FFFFFF"
-                            android:textSize="14sp"
+                            android:textSize="12sp"
                             android:fontFamily="@string/font_regular"
                             android:letterSpacing="0.14"
                             android:textAllCaps="true" />

@@ -1,5 +1,15 @@
 {
   "background_color": "#070A14",
   "wallpaper": true,
+  "columns": 6,
+  "rows_below_dock": 1,
+  "dock_apps": [
+    "com.netflix.ninja",
+    "com.amazon.amazonvideo.livingroom",
+    "com.google.android.youtube.tv",
+    "com.disney.disneyplus",
+    "com.wbd.stream"
+  ],
+  "fill_dock": false,
   "race_calendar_url": "https://raw.githubusercontent.com/tanchez1236/cleanyourtv/main/docs/data/f1.json"
 }

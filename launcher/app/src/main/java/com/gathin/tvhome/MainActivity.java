@@ -198,6 +198,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** A remote calendar has arrived once: after that, network changes stop forcing a retry. */
     private boolean raceCalendarFromRemote;
     private static final long RACE_REFRESH_MS = 6 * 60 * 60 * 1000L;
+    private View weatherRow;
+    private ImageView weatherIcon;
+    private TextView weatherText;
+    private WeatherLoader.Data weather;
+    /** elapsedRealtime of the last weather attempt; the widget refreshes at most every 30 minutes. */
+    private long weatherFetchedAt;
+    private boolean weatherFromNetwork;
+    private static final long WEATHER_REFRESH_MS = 30 * 60 * 1000L;
     private View racePanel;
     private TextView raceKicker, raceHeadline, raceSessions;
     /** game_day: each team's next game from an add-on, rotating in the race panel; null when the key is off. */
@@ -351,6 +359,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             handler.post(MainActivity.this::updateWifiLabel);
             // At boot Home often appears before Wi-Fi is up. Retry until the first download lands.
             handler.post(MainActivity.this::retryRaceCalendar);
+            handler.post(MainActivity.this::retryWeather);
         }
 
         @Override
@@ -421,6 +430,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         public void run() {
             updateGreeting();
             refreshRaceCalendar(false);
+            refreshWeather(false);
             updatePanel();
             // The pill follows the network callbacks and each return to Home; only the festive light follows the
             // signal level, so only it needs this minute's binder calls (about 7 ms on the UI thread).
@@ -546,12 +556,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         raceKicker = findViewById(R.id.raceKicker);
         raceHeadline = findViewById(R.id.raceHeadline);
         raceSessions = findViewById(R.id.raceSessions);
+        weatherRow = findViewById(R.id.weatherRow);
+        weatherIcon = findViewById(R.id.weatherIcon);
+        weatherText = findViewById(R.id.weatherText);
         raceBar = findViewById(R.id.raceBar);
         racePager = findViewById(R.id.racePager);
         gameDay = GameDay.create(this, cfg.gameDay, handler, this::updatePanel);
         // The rotation runs on the clock that never jumps: setting the TV's time must not stall or stretch a turn.
         rotationStart = SystemClock.elapsedRealtime();
         refreshRaceCalendar(true);
+        refreshWeather(true);
         showStats = cfg.showStats;
         inputsConnectedOnly = cfg.inputsConnectedOnly;
         shamsi = cfg.shamsiDate;
@@ -1055,6 +1069,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (openLiveTvAfterBoot()) return;
         updateGreeting();
         refreshRaceCalendar(false);
+        refreshWeather(false);
         updatePanel();
         // The network and Inputs pills keep their state while Home is in the background, and callbacks update them
         // when the network or the inputs change, so this refresh only catches anything missed. Its binder calls
@@ -2742,6 +2757,49 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (fromNetwork) raceCalendarFromRemote = true;
             updatePanel();
         });
+    }
+
+    private void refreshWeather(boolean force) {
+        long now = SystemClock.elapsedRealtime();
+        if (!force && weatherFetchedAt != 0 && now - weatherFetchedAt < WEATHER_REFRESH_MS) return;
+        weatherFetchedAt = now;
+        WeatherLoader.load(this, (data, fromNetwork) -> {
+            if (isFinishing() || isDestroyed()) return;
+            weather = data;
+            if (fromNetwork) weatherFromNetwork = true;
+            updateWeather();
+        });
+    }
+
+    /** Retry after boot when Home appeared before the Wi-Fi did. */
+    private void retryWeather() {
+        if (!weatherFromNetwork) refreshWeather(true);
+    }
+
+    private void updateWeather() {
+        if (weatherRow == null) return;
+        if (weather == null) {
+            weatherRow.setVisibility(View.GONE);
+            return;
+        }
+        weatherIcon.setImageResource(weatherIcon(weather.code, weather.day));
+        weatherText.setText(weather.city + "  \u00B7  " + Math.round(weather.temperature) + "\u00B0C");
+        weatherRow.setVisibility(View.VISIBLE);
+    }
+
+    /** WMO weather code to one of the small monochrome icons in res/drawable. */
+    private static int weatherIcon(int code, boolean day) {
+        if (code == 0) return day ? R.drawable.ic_weather_sun : R.drawable.ic_weather_night;
+        if (code == 1 || code == 2) {
+            return day ? R.drawable.ic_weather_partly_cloudy : R.drawable.ic_weather_night;
+        }
+        if (code == 3) return R.drawable.ic_weather_cloud;
+        if (code == 45 || code == 48) return R.drawable.ic_weather_fog;
+        if (code == 71 || code == 73 || code == 75 || code == 77
+                || code == 85 || code == 86) return R.drawable.ic_weather_snow;
+        if (code == 95 || code == 96 || code == 99) return R.drawable.ic_weather_storm;
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return R.drawable.ic_weather_rain;
+        return R.drawable.ic_weather_cloud;
     }
 
     private void updateRace() {        // an empty calendar (a theme without race_calendar, or a reset) hides a panel the last theme showed

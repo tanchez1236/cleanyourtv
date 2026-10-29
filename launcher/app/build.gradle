@@ -45,4 +45,6 @@ dependencies {
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
     // Test only (never in the APK): plain JVM tests for the module card validators, src/test.
     testImplementation 'junit:junit:4.13.2'
+    // org.json is part of Android at runtime; the JVM tests use the Maven copy so the calendar parser runs.
+    testImplementation 'org.json:json:20240303'
 }

@@ -191,6 +191,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private int lunarOffset;
     private TextView stats;
     private List<RaceWeekend.Race> raceCalendar;
+    /** A theme's optional remote calendar; empty means the theme's embedded race_calendar is used as is. */
+    private String raceCalendarUrl = "";
+    /** elapsedRealtime of the last download attempt, so Home left open refreshes at most every few hours. */
+    private long raceCalendarFetchedAt;
+    /** A remote calendar has arrived once: after that, network changes stop forcing a retry. */
+    private boolean raceCalendarFromRemote;
+    private static final long RACE_REFRESH_MS = 6 * 60 * 60 * 1000L;
     private View racePanel;
     private TextView raceKicker, raceHeadline, raceSessions;
     /** game_day: each team's next game from an add-on, rotating in the race panel; null when the key is off. */
@@ -342,6 +349,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         @Override
         public void onAvailable(@NonNull Network network) {
             handler.post(MainActivity.this::updateWifiLabel);
+            // At boot Home often appears before Wi-Fi is up. Retry until the first download lands.
+            handler.post(MainActivity.this::retryRaceCalendar);
         }
 
         @Override
@@ -411,6 +420,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         @Override
         public void run() {
             updateGreeting();
+            refreshRaceCalendar(false);
             updatePanel();
             // The pill follows the network callbacks and each return to Home; only the festive light follows the
             // signal level, so only it needs this minute's binder calls (about 7 ms on the UI thread).
@@ -531,6 +541,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         shamsiDate = findViewById(R.id.shamsiDate);
         stats = findViewById(R.id.stats);
         raceCalendar = cfg.raceCalendar;
+        raceCalendarUrl = cfg.raceCalendarUrl;
         racePanel = findViewById(R.id.racePanel);
         raceKicker = findViewById(R.id.raceKicker);
         raceHeadline = findViewById(R.id.raceHeadline);
@@ -540,6 +551,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         gameDay = GameDay.create(this, cfg.gameDay, handler, this::updatePanel);
         // The rotation runs on the clock that never jumps: setting the TV's time must not stall or stretch a turn.
         rotationStart = SystemClock.elapsedRealtime();
+        refreshRaceCalendar(true);
         showStats = cfg.showStats;
         inputsConnectedOnly = cfg.inputsConnectedOnly;
         shamsi = cfg.shamsiDate;
@@ -1042,6 +1054,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (openLiveTvAfterBoot()) return;
         updateGreeting();
+        refreshRaceCalendar(false);
         updatePanel();
         // The network and Inputs pills keep their state while Home is in the background, and callbacks update them
         // when the network or the inputs change, so this refresh only catches anything missed. Its binder calls
@@ -2706,6 +2719,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         for (int k = 0; k < count; k++) racePager.getChildAt(k).setAlpha(k == on ? 0.9f : 0.3f);
         racePager.setVisibility(View.VISIBLE);
+    }
+
+    /** First download after boot, and a retry when the network comes up after Home did. */
+    private void retryRaceCalendar() {
+        if (!raceCalendarFromRemote) refreshRaceCalendar(true);
+    }
+
+    /**
+     * Reads the calendar a theme points at. Called with {@code force} at startup and when the network
+     * appears; while Home stays open, the minute tick refreshes it at most once every six hours, so a
+     * moved session shows up without a reboot. A failed download keeps the cached or embedded calendar.
+     */
+    private void refreshRaceCalendar(boolean force) {
+        if (raceCalendarUrl.isEmpty()) return;
+        long now = SystemClock.elapsedRealtime();
+        if (!force && raceCalendarFetchedAt != 0 && now - raceCalendarFetchedAt < RACE_REFRESH_MS) return;
+        raceCalendarFetchedAt = now;
+        RaceCalendarLoader.load(this, raceCalendarUrl, (calendar, fromNetwork) -> {
+            if (isFinishing() || isDestroyed()) return;
+            raceCalendar = calendar;
+            if (fromNetwork) raceCalendarFromRemote = true;
+            updatePanel();
+        });
     }
 
     private void updateRace() {        // an empty calendar (a theme without race_calendar, or a reset) hides a panel the last theme showed

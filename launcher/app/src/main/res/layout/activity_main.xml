@@ -401,6 +401,15 @@
                 android:fontFamily="@string/font_medium"
                 android:letterSpacing="0.12" />
 
+            <!-- A short kerb-red line under the live or next session; repositioned in updateRace. -->
+            <View
+                android:id="@+id/raceSessionBar"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="3dp"
+                android:background="@drawable/race_bar"
+                android:visibility="gone" />
+
             <!-- game_day: one dot per turn when the panel rotates between games (and the F1 weekend). -->
             <LinearLayout
                 android:id="@+id/racePager"

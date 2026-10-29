@@ -208,6 +208,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private static final long WEATHER_REFRESH_MS = 30 * 60 * 1000L;
     private View racePanel;
     private TextView raceKicker, raceHeadline, raceSessions;
+    private View raceSessionBar;
     /** game_day: each team's next game from an add-on, rotating in the race panel; null when the key is off. */
     private GameDay gameDay;
     private View raceBar;
@@ -558,6 +559,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         raceKicker = findViewById(R.id.raceKicker);
         raceHeadline = findViewById(R.id.raceHeadline);
         raceSessions = findViewById(R.id.raceSessions);
+        raceSessionBar = findViewById(R.id.raceSessionBar);
         weatherRow = findViewById(R.id.weatherRow);
         weatherIcon = findViewById(R.id.weatherIcon);
         weatherText = findViewById(R.id.weatherText);
@@ -2836,11 +2838,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 android.text.format.DateFormat.is24HourFormat(this) ? "EEE HH:mm" : "EEE h:mm a", Locale.getDefault())
                 .withZone(java.time.ZoneId.systemDefault());
         android.text.SpannableStringBuilder row = new android.text.SpannableStringBuilder();
+        int[] starts = new int[race.sessions.size()];
+        int[] ends = new int[race.sessions.size()];
         for (int i = 0; i < race.sessions.size(); i++) {
             RaceWeekend.Session session = race.sessions.get(i);
             if (i > 0) row.append("     ");
             int start = row.length();
+            starts[i] = start;
             row.append(session.shortName(getResources())).append("  ").append(when.format(session.start).toUpperCase(Locale.getDefault()));
+            ends[i] = row.length();
             int color;
             switch (s.statuses.get(i)) {
                 case DONE: color = 0x47FFFFFF; break;
@@ -2850,8 +2856,40 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
             row.setSpan(new android.text.style.ForegroundColorSpan(color), start, row.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
+        // The red line follows the live session, or the next one while the weekend is waiting.
+        int active = -1;
+        for (int i = 0; i < s.statuses.size(); i++) {
+            if (s.statuses.get(i) == RaceWeekend.Status.LIVE) {
+                active = i;
+                break;
+            }
+            if (s.statuses.get(i) == RaceWeekend.Status.NEXT && active < 0) active = i;
+        }
+        final int activeIndex = active;
+        final int[] sessionStarts = starts, sessionEnds = ends;
         raceSessions.setText(row);
+        raceSessions.post(() -> placeSessionBar(activeIndex, sessionStarts, sessionEnds));
         racePanel.setVisibility(View.VISIBLE);
+    }
+
+    /** Puts the short red line under the session the weekend is on, or under the next one. */
+    private void placeSessionBar(int index, int[] starts, int[] ends) {
+        if (raceSessionBar == null) return;
+        android.text.Layout layout = raceSessions.getLayout();
+        if (index < 0 || index >= starts.length || layout == null || layout.getLineCount() == 0) {
+            raceSessionBar.setVisibility(View.GONE);
+            return;
+        }
+        float left = layout.getPrimaryHorizontal(starts[index]) + raceSessions.getTotalPaddingLeft();
+        float right = layout.getPrimaryHorizontal(ends[index]) + raceSessions.getTotalPaddingLeft();
+        int width = Math.max(2, Math.round(right - left));
+        ViewGroup.LayoutParams lp = raceSessionBar.getLayoutParams();
+        if (lp.width != width) {
+            lp.width = width;
+            raceSessionBar.setLayoutParams(lp);
+        }
+        raceSessionBar.setTranslationX(left);
+        raceSessionBar.setVisibility(View.VISIBLE);
     }
 
     private void refreshPillsAfterNextDraw() {

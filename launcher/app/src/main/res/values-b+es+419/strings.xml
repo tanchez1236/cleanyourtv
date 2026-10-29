@@ -24,7 +24,7 @@
     <string name="not_available">No disponible en este televisor</string>
     <string name="cant_open">No se puede abrir %1$s</string>
     <string name="date_format">EEEE d \'de\' MMMM</string>
-    <string name="date_format_home">EEEE\nd \'de\' MMMM</string>
+    <string name="date_format_home">EEEE d \'de\' MMMM</string>
     <string name="shamsi_month_farvardin">Farvardín</string>
     <string name="shamsi_month_ordibehesht">Ordibehesht</string>
     <string name="shamsi_month_khordad">Jordad</string>

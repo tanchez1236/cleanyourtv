@@ -2,7 +2,8 @@
 
 The launcher shows a small F1 panel under the clock from 24 hours before a weekend's first session
 until 4 hours after the race starts. It shows the next session with a countdown (or the live one) and
-the weekend's session times in the TV's time zone. When no race is near, it takes no space.
+the weekend's session times in the TV's time zone. A short red line follows the live or next session
+across the row. When no race is near, it takes no space.
 
 The panel is part of the header, above the app grid, so it never overlaps app labels or the dock.
 

@@ -245,6 +245,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean glassShown;
     private final Rect tileRect = new Rect();
     private final Rect revealRect = new Rect();
+    private final int[] cardLocation = new int[2];
+    private final int[] rootLocation = new int[2];
     // Static so they survive the activity being destroyed while another app is open (low-memory TVs,
     // or Developer options → "Don't keep activities"); they only reset when the process dies.
     private static int lastFocused = 0;
@@ -1740,10 +1742,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             });
             return;
         }
-        // Tile rect in root coordinates, using layout positions (ignores the scale animation).
+        // Tile rect in root coordinates, using layout positions (ignores the scale animation). Location in
+        // window includes the dock's translationX, so the highlight follows a short dock's spread tiles.
         Rect r = tileRect;
-        r.set(0, 0, card.getWidth(), card.getHeight());
-        root.offsetDescendantRectToMyCoords(card, r);
+        card.getLocationInWindow(cardLocation);
+        root.getLocationInWindow(rootLocation);
+        int left = cardLocation[0] - rootLocation[0];
+        int top = cardLocation[1] - rootLocation[1];
+        r.set(left, top, left + card.getWidth(), top + card.getHeight());
         float pad = 6f * density;        // matches GlassView's glow inset
         float scale = adapter.focusScale();
         float w = card.getWidth() * scale + 2 * pad;

@@ -56,13 +56,17 @@ final class RaceCalendarLoader {
         new Thread(() -> {
             File cache = cacheFile(app, url);
             List<RaceWeekend.Race> cached = read(cache);
-            if (!cached.isEmpty()) deliver(listener, cached, false);
+            if (!cached.isEmpty()) {
+                Log.i(TAG, "showing cached calendar: " + cached.size() + " races");
+                deliver(listener, cached, false);
+            }
 
             try {
                 String body = fetch(url);
                 List<RaceWeekend.Race> fresh = parse(body);
                 if (fresh.isEmpty()) throw new IOException("calendar has no readable races");
                 write(cache, body);
+                Log.i(TAG, "downloaded calendar: " + fresh.size() + " races from " + url);
                 deliver(listener, fresh, true);
             } catch (Exception e) {
                 Log.w(TAG, "remote calendar unavailable (" + url + "): " + e.getMessage());

@@ -100,6 +100,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static final float FOCUS_SCALE = 1.10f;
     /** Design size of a tile (dp); tiles shrink from here when the columns don't fit, see tileWidthPx. */
     static final float DESIGN_W_DP = 180f, DESIGN_H_DP = 101f;
+    private static final int VIEW_TYPE_APP = 0, VIEW_TYPE_LIBRARY = 1, VIEW_TYPE_DOCK_STRETCHED = 10;
 
     /**
      * Tile width for a grid of this inner width: the cell minus room for the focus zoom and the glass
@@ -398,7 +399,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == 1) {
+        if (viewType == VIEW_TYPE_LIBRARY) {
             View row = LayoutInflater.from(ctx).inflate(R.layout.row_app_library, parent, false);
             View button = row.findViewById(R.id.btnLibrary);
             button.setOnClickListener(v -> listener.onLibraryRequested());
@@ -415,7 +416,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         float density = parent.getResources().getDisplayMetrics().density;
         int width = parent.getWidth() > 0 ? parent.getWidth() : parent.getMeasuredWidth();
         int inner = width - parent.getPaddingLeft() - parent.getPaddingRight();
-        int w = tileWidthPx(inner, parent.getHeight(), dockSize, rowsBelowDock, dockTitle, dockRow, density), h = tileHeightPx(w);
+        // A five-app dock in a six-column grid spreads over the free slot instead of leaving it blank.
+        int columns = viewType >= VIEW_TYPE_DOCK_STRETCHED ? viewType - VIEW_TYPE_DOCK_STRETCHED : dockSize;
+        int w = tileWidthPx(inner, parent.getHeight(), columns, rowsBelowDock, dockTitle, dockRow, density), h = tileHeightPx(w);
         View card = v.findViewById(R.id.card);
         ViewGroup.LayoutParams cardLp = card.getLayoutParams();
         cardLp.width = w;
@@ -460,6 +463,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (isLibraryAt(position)) return;
         Holder h = (Holder) holder;
         Entry e = items.get(position);
+        if (stretchDock() && position < docked) {
+            applyDockStretch(h.itemView, position);
+        } else {
+            h.itemView.setTranslationX(0f);
+        }
         if (e.kind == Entry.EMPTY) {
             // A free dock slot keeps its place in the row and the band, but shows nothing and takes no focus.
             h.card.setVisibility(View.INVISIBLE);
@@ -569,7 +577,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     boolean isLibraryAt(int position) { return showLibrary && position == items.size(); }
 
-    @Override public int getItemViewType(int position) { return isLibraryAt(position) ? 1 : 0; }
+    @Override public int getItemViewType(int position) {
+        if (isLibraryAt(position)) return VIEW_TYPE_LIBRARY;
+        if (stretchDock() && position < docked) return VIEW_TYPE_DOCK_STRETCHED + docked;
+        return VIEW_TYPE_APP;
+    }
 
     boolean containsPackage(String pkg) {
         for (Entry entry : items) if (entry.pkg.equals(pkg)) return true;
@@ -651,6 +663,27 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** Dock slots that hold an app: the whole dock unless some slots are empty. */
     int dockFilled() {
         return emptySlots > 0 ? docked : dockSize;
+    }
+
+    /** A five-app dock in a six-column grid spreads across the free slot instead of leaving it blank. */
+    private boolean stretchDock() {
+        return dockRow && !singleRow && !fillDock && !reordering && docked > 0 && docked < dockSize;
+    }
+
+    /** Move each of the dock's tiles to its place in a row of {@link #docked} equal slots. */
+    private void applyDockStretch(View itemView, int position) {
+        View parent = itemView.getParent() instanceof View ? (View) itemView.getParent() : null;
+        if (parent == null) {
+            itemView.post(() -> applyDockStretch(itemView, position));
+            return;
+        }
+        int inner = parent.getWidth() - parent.getPaddingLeft() - parent.getPaddingRight();
+        if (inner <= 0) {
+            itemView.post(() -> applyDockStretch(itemView, position));
+            return;
+        }
+        float delta = inner / (float) docked - inner / (float) dockSize;
+        itemView.setTranslationX((position + 0.5f) * delta);
     }
 
     /** A position focus can land on: an empty dock slot gives the last dock app. */

@@ -16,7 +16,7 @@ The launcher is the same plain-Java launcher as upstream, with the changes below
 | **Weather widget.** Above the date: the TV's last known place, the current temperature in °C and a monochrome icon for sun, night, partly cloudy, cloud, rain, storm, snow or fog. It uses Android's last known location, BigDataCloud for the Spanish place name and Open-Meteo for the reading; no API key. It refreshes every 30 minutes and keeps a cached reading. | `WeatherLoader.java`, `MainActivity.java`, `res/drawable/ic_weather_*` |
 | **Race panel in the header flow.** The F1 panel now sits in the header column, so it pushes the grid down instead of rendering behind app labels. | `res/layout*/activity_main.xml` |
 | **Smaller date text** (12sp instead of 14sp). | `res/layout*/activity_main.xml` |
-| **Five-app dock.** `themes/aurora` pins Netflix, Prime Video, YouTube, Disney+ and HBO Max and turns `fill_dock` off, so the dock never grows to six. | `themes/aurora/config.json` |
+| **Five-app dock.** `themes/aurora` pins Netflix, Prime Video, YouTube, Disney+ and HBO Max and turns `fill_dock` off, so the dock never grows to six. The five tiles spread across the free slot instead of leaving a blank space at the end. | `themes/aurora/config.json`, `AppAdapter.java` |
 
 The launcher therefore declares `android.permission.INTERNET`. It also uses `ACCESS_FINE_LOCATION`,
 which upstream already declared for the Wi-Fi name; `launcher/build-and-install.sh` grants it.

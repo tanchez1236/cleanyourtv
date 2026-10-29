@@ -90,14 +90,16 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         if (!bandVisible) return;
         boolean any = false;
         int cardWidth = 0;
+        int dockCards = 0;
         for (int i = 0; i < parent.getChildCount(); i++) {
             View child = parent.getChildAt(i);
             int pos = parent.getChildAdapterPosition(child);
             if (pos < 0 || (!bandAll && pos >= dockSize)) continue;
             RecyclerView.ViewHolder vh = parent.getChildViewHolder(child);
             View card = vh instanceof AppAdapter.Holder ? ((AppAdapter.Holder) vh).card : child.findViewById(R.id.card);
-            if (card == null) continue;
-            float l = child.getLeft() + card.getLeft();
+            if (card == null || card.getVisibility() != View.VISIBLE) continue;
+            if (!singleRow && pos < dockSize) dockCards++;
+            float l = child.getLeft() + child.getTranslationX() + card.getLeft();
             float t = child.getTop() + card.getTop() + child.getTranslationY();
             float r = l + card.getWidth();
             float b = t + card.getHeight();
@@ -124,7 +126,7 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
             int inner = parent.getWidth() - parent.getPaddingLeft() - parent.getPaddingRight();
             // A single row's tiles can run off the screen, so only its top limits the padding; its ends are clamped below.
             float room = (singleRow ? rect.top : Math.min(rect.top, Math.min(rect.left, parent.getWidth() - rect.right))) - density;
-            float even = evenPaddingPx(inner, dockSize, cardWidth, room);
+            float even = evenPaddingPx(inner, singleRow ? dockSize : Math.max(1, dockCards), cardWidth, room);
             rect.inset(-even, -even);
             radius = radiusPx(radius, even);
         } else {

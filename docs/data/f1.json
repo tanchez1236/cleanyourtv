@@ -1,37 +1,9 @@
 {
-  "updated": "2026-11-03T12:50:51Z",
+  "updated": "2026-11-10T13:32:12Z",
   "seasons": [
     2026
   ],
   "race_calendar": [
-    {
-      "round": 20,
-      "name": "Brazilian Grand Prix",
-      "place": "São Paulo",
-      "sessions": [
-        {
-          "name": "FP1",
-          "start": "2026-11-06T15:30:00Z"
-        },
-        {
-          "name": "FP2",
-          "start": "2026-11-06T19:00:00Z"
-        },
-        {
-          "name": "FP3",
-          "start": "2026-11-07T14:30:00Z"
-        },
-        {
-          "name": "QUALIFYING",
-          "start": "2026-11-07T18:00:00Z"
-        },
-        {
-          "name": "RACE",
-          "start": "2026-11-08T17:00:00Z"
-        }
-      ],
-      "season": 2026
-    },
     {
       "round": 21,
       "name": "Las Vegas Grand Prix",
